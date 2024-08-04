@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  psql:
+    image: postgres:14.12-alpine3.20
+    container_name: psql-container
+    hostname: postgres_server
+    restart: always
+    environment:
+      POSTGRES_USER: ivan_user
+      POSTGRES_PASSWORD: ivan_password
+    ports:
+      - "2020:20"
+
+  pgadmin:
+    image: dpage/pgadmin4:8.4
+    container_name: pgadmin-container
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ivan.sklvvv@yandex.ru
+      PGADMIN_DEFAULT_PASSWORD: password
+      PGADMIN_LISTEN_ADDRESS: 0.0.0.0
+      PGADMIN_LISTEN_PORT: 30
+    ports:
+      - "3030:30"
+    depends_on:
+      - psql
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    container_name: zookeeper-container
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 40
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "4040:40"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-container
+    hostname: kafkaserver
+    restart: always
+    ports:
+      - "5050:50"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_LISTENERS: PLAINTEXT://kafkaserver:50
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafkaserver:50
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:40
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  app:
+    image: netbell-testing-task-app:0.0.1
+    container_name: app-container
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6060:60"
+    depends_on:
+      - psql
+      - kafka
+
+
+
+
+
+
